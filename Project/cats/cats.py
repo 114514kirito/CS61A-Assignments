@@ -38,7 +38,12 @@ def pick(paragraphs, select, k):
     """
     # BEGIN PROBLEM 1
     "*** YOUR CODE HERE ***"
-    # END PROBLEM 1
+    picks=[i for i in paragraphs if select(i)]
+    if k > len(picks)-1:
+        return ''
+    else:
+        return picks[k]
+    #END PROBLEM 1
 
 
 def about(subject):
@@ -58,6 +63,15 @@ def about(subject):
 
     # BEGIN PROBLEM 2
     "*** YOUR CODE HERE ***"
+    def check(paragraphs):
+        paragraphs=lower(remove_punctuation(paragraphs))
+        ls=split(paragraphs)
+        for i in ls :
+            if i in subject:
+                return True
+        return False
+    return check    
+
     # END PROBLEM 2
 
 
@@ -88,6 +102,19 @@ def accuracy(typed, source):
     source_words = split(source)
     # BEGIN PROBLEM 3
     "*** YOUR CODE HERE ***"
+    if len(source_words)==0:
+        return 100.0 if len(typed_words)==0 else  0.0
+    if len(typed_words)==0:
+        return 0.0
+    correct=0
+    for i in range(min(len(typed_words),len(source_words))):
+        if typed_words[i]==source_words[i]:
+            correct+=1
+    return correct *100/len(typed_words)
+    
+        
+                
+
     # END PROBLEM 3
 
 
@@ -107,6 +134,7 @@ def wpm(typed, elapsed):
     # BEGIN PROBLEM 4
     "*** YOUR CODE HERE ***"
     # END PROBLEM 4
+    return len(typed)/elapsed*12
 
 
 ################
@@ -167,6 +195,41 @@ def autocorrect(typed_word, word_list, diff_function, limit):
     """
     # BEGIN PROBLEM 5
     "*** YOUR CODE HERE ***"
+    """ls1=[]
+    ls2=[]
+    for word in word_list:
+        if typed_word==word:
+            return word
+        diff=diff_function(typed_word,m,limit)
+        if diff <=limit:
+            ls1.append((word,diff))
+            ls2.append(diff)
+    if len(ls1)==0:
+        return typed_word
+    else:
+        diff_min=min(ls2,key=abs)
+        for word,diff in ls1:
+            if diff==diff_min:
+                return word"""
+
+    best_word = typed_word
+    best_diff = limit + 1  # 先设为比 limit 更大，这样下面比较容易写
+    for word in word_list:
+        if word ==typed_word:
+            return word
+        diff = diff_function(typed_word, word, limit)
+        if diff < best_diff:
+            best_diff = diff
+            best_word = word
+    if best_diff > limit:
+        return typed_word
+    return best_word
+       
+           
+
+
+
+
     # END PROBLEM 5
 
 
@@ -193,8 +256,42 @@ def furry_fixes(typed, source, limit):
     5
     """
     # BEGIN PROBLEM 6
-    assert False, 'Remove this line'
+    '''def compare(i=0,count=0):
+        if i ==min(len(typed),len(source)):
+            return count
+        if typed[i]!=source[i]:
+            count+=1
+            if count >limit:
+                return limit+1
+        return compare(i+1,count)
+    count=compare()
+    if count==limit+1:
+        return count
+    else:
+        return count+abs(len(typed)-len(source))'''
+    def helper(t,s,remaining):
+        if remaining <0:
+            return limit +1
+        if t=="" or s=="":
+            return abs(len(t)-len(s)) 
+        if  t[0]==s[0]:
+            return helper(t[1:],s[1:],remaining)
+        else:
+            return 1 +helper(t[1:],s[1:],remaining-1)
+    return helper(typed,source,limit)    
+    
+        
+
+    
+    
+    
+
+
+   
     # END PROBLEM 6
+    
+
+
 
 
 def minimum_mewtations(typed, source, limit):
@@ -214,23 +311,21 @@ def minimum_mewtations(typed, source, limit):
     >>> minimum_mewtations("ckiteus", "kittens", big_limit) # ckiteus -> kiteus -> kitteus -> kittens
     3
     """
-    assert False, 'Remove this line'
-    if ___________: # Base cases should go here, you may add more base cases as needed.
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
-    # Recursive cases should go below here
-    if ___________: # Feel free to remove or add additional cases
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
-    else:
-        add = ... # Fill in these lines
-        remove = ...
-        substitute = ...
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
+    def helper(t,s,remaining):
+        if remaining<0:
+            return limit+1
+        if t=="" or s =="":
+            return abs(len(t)-len(s))
+        if t[0]==s[0]:
+            return helper(t[1:],s[1:],remaining)
+        else:
+            add=1+helper(t,s[1:],remaining-1)
+            remove=1+helper(t[1:],s,remaining-1)
+            substitute=1+helper(t[1:],s[1:],remaining-1)
+        return min(add,remove,substitute) 
+    return helper(typed,source,limit)   
+        
+        
 
 
 # Ignore the line below
@@ -276,6 +371,18 @@ def report_progress(typed, source, user_id, upload):
     """
     # BEGIN PROBLEM 8
     "*** YOUR CODE HERE ***"
+    def helper(t,s):
+        if not t or not s:
+            return 0
+        if s[0]!=t[0]:
+            return 0
+        return 1+helper(t[1:],s[1:])
+    count=helper(typed,source)
+    progress=count/len(source)
+    upload({'id': user_id, 'progress': progress})
+    return progress    
+
+
     # END PROBLEM 8
 
 
@@ -299,7 +406,14 @@ def time_per_word(words, timestamps_per_player):
     """
     tpp = timestamps_per_player  # A shorter name (for convenience)
     # BEGIN PROBLEM 9
-    times = []  # You may remove this line
+    times=[]
+    for i in timestamps_per_player:
+        ls=[]
+        for j in range(len(i)-1):
+            ls.append(i[j+1]-i[j])
+        times.append(ls)    
+
+
     # END PROBLEM 9
     return {'words': words, 'times': times}
 
@@ -327,6 +441,28 @@ def fastest_words(words_and_times):
     word_indices = range(len(words))    # contains an *index* for each word
     # BEGIN PROBLEM 10
     "*** YOUR CODE HERE ***"
+    fastest_word=[0]*len(words)
+    #fastest_word=每个单词的最快的玩家
+    for i in player_indices:
+        for j in word_indices:
+            if times[i][j]<times[fastest_word[j]][j]:
+                fastest_word[j]=i
+    ls1=[]                       
+    for i in player_indices:
+        ls=[]
+        for j in word_indices:
+            if fastest_word[j]==i:
+                ls.append(words[j])
+        ls1.append(ls)
+    return ls1        
+
+
+
+
+                            
+                
+
+
     # END PROBLEM 10
 
 
